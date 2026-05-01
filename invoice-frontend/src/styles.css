@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply transition-colors duration-300;
+  }
+}
+
+mat-icon.app-icon {
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+mat-icon.app-icon-sm {
+  font-size: 1rem;
+}
+
+mat-icon.app-icon-md {
+  font-size: 1.125rem;
+}
+
+mat-icon.app-icon-lg {
+  font-size: 1.375rem;
+}
+
+mat-icon.app-icon-xl {
+  font-size: 2rem;
+}
+
+mat-icon.app-icon-hero {
+  font-size: 2.75rem;
+}

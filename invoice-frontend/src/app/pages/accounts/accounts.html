@@ -1,0 +1,221 @@
+<div class="p-8 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+  <div class="mb-6 flex justify-between items-center">
+    <div>
+      <h2 class="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+        <mat-icon
+          class="app-icon app-icon-lg text-indigo-600 dark:text-indigo-400"
+          aria-hidden="true"
+          >manage_accounts</mat-icon
+        >
+        Gestion des comptes comptable
+      </h2>
+      <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+        Creation, modification et desactivation des comptes
+      </p>
+    </div>
+    <span
+      class="px-4 py-2 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300"
+    >
+      {{ items.length }} compte(s)
+    </span>
+  </div>
+
+  <div
+    class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-5 mb-6"
+  >
+    <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-3">Ajouter un compte comptable</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-3 items-start">
+      <input
+        [(ngModel)]="form.username"
+        placeholder="Nom utilisateur"
+        class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+      />
+      <input
+        [(ngModel)]="form.display_name"
+        placeholder="Nom d'affichage"
+        class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+      />
+      <input
+        [(ngModel)]="form.password"
+        type="password"
+        placeholder="Mot de passe (min 6)"
+        class="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+      />
+      <div class="permissions-select">
+        <button
+          type="button"
+          class="permissions-trigger"
+          (click)="toggleCreatePermissionsDropdown($event)"
+          [attr.aria-expanded]="createPermissionsOpen"
+        >
+          <span class="permissions-trigger-label">{{
+            getPermissionsSummary(form.permissions)
+          }}</span>
+          <mat-icon class="app-icon app-icon-sm permissions-trigger-arrow" aria-hidden="true"
+            >expand_more</mat-icon
+          >
+        </button>
+
+        <div class="permissions-menu" *ngIf="createPermissionsOpen">
+          <button
+            type="button"
+            class="permissions-option permissions-option-button"
+            *ngFor="let perm of permissionOptions"
+            (click)="toggleFormPermission(perm.value)"
+            [class.permissions-option-selected]="isFormPermissionSelected(perm.value)"
+          >
+            <span>{{ perm.label }}</span>
+            <mat-icon
+              class="app-icon app-icon-sm permissions-option-mark"
+              *ngIf="isFormPermissionSelected(perm.value)"
+              aria-hidden="true"
+              >check</mat-icon
+            >
+          </button>
+        </div>
+      </div>
+      <button
+        (click)="createComptable()"
+        [disabled]="saving"
+        class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
+      >
+        {{ saving ? 'Creation...' : 'Ajouter' }}
+      </button>
+    </div>
+    <p class="mt-2 text-xs text-gray-400">
+      Champ moderne multi-selection: cochez une ou plusieurs permissions.
+    </p>
+  </div>
+
+  <div *ngIf="loading" class="text-center text-gray-400 py-16">Chargement des comptes...</div>
+
+  <div
+    *ngIf="error"
+    class="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-xl"
+  >
+    {{ error }}
+  </div>
+
+  <div
+    *ngIf="!loading"
+    class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700"
+  >
+    <div class="overflow-x-auto overflow-y-visible">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
+            <th class="px-4 py-3 text-left">Username</th>
+            <th class="px-4 py-3 text-left">Nom</th>
+            <th class="px-4 py-3 text-left">Statut</th>
+            <th class="px-4 py-3 text-left">Cree le</th>
+            <th class="px-4 py-3 text-left">MAJ le</th>
+            <th class="px-4 py-3 text-left">Nouveau mot de passe</th>
+            <th class="px-4 py-3 text-left">Permissions</th>
+            <th class="px-4 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <tr *ngIf="items.length === 0">
+            <td colspan="8" class="px-4 py-10 text-center text-gray-400">
+              Aucun compte comptable.
+            </td>
+          </tr>
+
+          <tr *ngFor="let item of items; let i = index">
+            <td class="px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">
+              {{ item.username }}
+            </td>
+            <td class="px-4 py-3">
+              <input
+                [(ngModel)]="editState[item.user_id].display_name"
+                class="px-2 py-1.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+              />
+            </td>
+            <td class="px-4 py-3">
+              <select
+                [(ngModel)]="editState[item.user_id].is_active"
+                class="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+              >
+                <option [ngValue]="true">Actif</option>
+                <option [ngValue]="false">Inactif</option>
+              </select>
+            </td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+              {{ formatDate(item.created_at) }}
+            </td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+              {{ formatDate(item.updated_at) }}
+            </td>
+            <td class="px-4 py-3">
+              <input
+                [(ngModel)]="editState[item.user_id].password"
+                type="password"
+                placeholder="Laisser vide"
+                class="px-2 py-1.5 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-200 text-sm"
+              />
+            </td>
+            <td class="px-4 py-3">
+              <div
+                class="permissions-select permissions-select-compact"
+                [class.permissions-select-dropup]="shouldOpenUp(i)"
+              >
+                <button
+                  type="button"
+                  class="permissions-trigger"
+                  (click)="toggleEditPermissionsDropdown(item.user_id, $event)"
+                  [attr.aria-expanded]="isEditPermissionsOpen(item.user_id)"
+                >
+                  <span class="permissions-trigger-label">{{
+                    getPermissionsSummary(editState[item.user_id].permissions)
+                  }}</span>
+                  <mat-icon
+                    class="app-icon app-icon-sm permissions-trigger-arrow"
+                    aria-hidden="true"
+                    >expand_more</mat-icon
+                  >
+                </button>
+
+                <div class="permissions-menu" *ngIf="isEditPermissionsOpen(item.user_id)">
+                  <button
+                    type="button"
+                    class="permissions-option permissions-option-button"
+                    *ngFor="let perm of permissionOptions"
+                    (click)="toggleEditPermission(item.user_id, perm.value)"
+                    [class.permissions-option-selected]="
+                      isEditPermissionSelected(item.user_id, perm.value)
+                    "
+                  >
+                    <span>{{ perm.label }}</span>
+                    <mat-icon
+                      class="app-icon app-icon-sm permissions-option-mark"
+                      *ngIf="isEditPermissionSelected(item.user_id, perm.value)"
+                      aria-hidden="true"
+                      >check</mat-icon
+                    >
+                  </button>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  (click)="saveChanges(item)"
+                  class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                >
+                  Enregistrer
+                </button>
+                <button
+                  (click)="deactivate(item)"
+                  [disabled]="!item.is_active"
+                  class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-40"
+                >
+                  Desactiver
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

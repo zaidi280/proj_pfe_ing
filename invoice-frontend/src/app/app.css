@@ -1,0 +1,20 @@
+.nav-link.active-nav {
+  background: linear-gradient(135deg, #EDE9FE, #EEF2FF);
+  color: #7C3AED !important;
+  font-weight: 600;
+}
+
+.dark .nav-link.active-nav {
+  background: rgba(139, 92, 246, 0.15);
+  color: #A78BFA !important;
+}
+
+.nav-link.active-nav svg {
+  color: #7C3AED;
+  stroke: #7C3AED;
+}
+
+.dark .nav-link.active-nav svg {
+  color: #A78BFA;
+  stroke: #A78BFA;
+}

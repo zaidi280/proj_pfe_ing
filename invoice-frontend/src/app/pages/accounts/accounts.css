@@ -1,0 +1,143 @@
+:host {
+  display: block;
+}
+
+.permissions-select {
+  position: relative;
+  min-width: 240px;
+}
+
+.permissions-select-compact {
+  min-width: 260px;
+}
+
+.permissions-trigger {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  background: #f9fafb;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.86rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.permissions-trigger:hover {
+  border-color: #818cf8;
+}
+
+.permissions-trigger:focus-visible {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.permissions-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.permissions-trigger-arrow {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.permissions-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  z-index: 20;
+  padding: 0.4rem;
+}
+
+.permissions-select-compact .permissions-menu {
+  top: calc(100% + 6px);
+  bottom: auto;
+  width: 280px;
+  left: auto;
+  right: 0;
+}
+
+.permissions-select-compact.permissions-select-dropup .permissions-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.permissions-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.84rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.permissions-option-button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+}
+
+.permissions-option-selected {
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 600;
+}
+
+.permissions-option-mark {
+  color: #4f46e5;
+  font-weight: 800;
+}
+
+.permissions-option:hover {
+  background: #f3f4f6;
+}
+
+:host-context(.dark) .permissions-trigger {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+:host-context(.dark) .permissions-trigger-arrow {
+  color: #d1d5db;
+}
+
+:host-context(.dark) .permissions-menu {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+:host-context(.dark) .permissions-option {
+  color: #e5e7eb;
+}
+
+:host-context(.dark) .permissions-option:hover {
+  background: #374151;
+}
+
+:host-context(.dark) .permissions-option-selected {
+  background: #312e81;
+  color: #c7d2fe;
+}
+
+:host-context(.dark) .permissions-option-mark {
+  color: #c7d2fe;
+}

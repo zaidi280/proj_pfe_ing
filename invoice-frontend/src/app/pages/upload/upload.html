@@ -1,0 +1,719 @@
+<div class="p-8 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+  <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 flex items-center gap-2">
+    <mat-icon class="app-icon app-icon-lg text-indigo-600 dark:text-indigo-400" aria-hidden="true"
+      >cloud_upload</mat-icon
+    >
+    Upload Facture
+  </h2>
+
+  <!-- STEP 1 : Upload -->
+  <div *ngIf="step === 'upload'">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-8 max-w-2xl mx-auto">
+      <!-- Drop zone -->
+      <div
+        class="border-2 border-dashed border-indigo-300 dark:border-indigo-600 rounded-xl p-12 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+      >
+        <div *ngIf="!previewUrls.length">
+          <mat-icon
+            class="app-icon app-icon-hero mb-4 text-indigo-600 dark:text-indigo-300"
+            aria-hidden="true"
+            >description</mat-icon
+          >
+          <p class="text-gray-500 dark:text-gray-400">Glisse une facture ici</p>
+          <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">
+            ou clique pour sélectionner plusieurs fichiers
+          </p>
+          <p class="text-gray-300 dark:text-gray-600 text-xs mt-2">
+            JPG, PNG, WEBP, BMP, TIFF, PDF
+          </p>
+        </div>
+
+        <div *ngIf="previewUrls.length" class="grid grid-cols-3 gap-3">
+          <div *ngFor="let file of selectedFiles.slice(0, 9); let i = index" class="relative">
+            <ng-container *ngIf="file.type.startsWith('image/'); else pdfPreview">
+              <img
+                [src]="previewUrls[i]"
+                class="h-24 w-full object-cover rounded-lg shadow"
+                alt="preview"
+              />
+            </ng-container>
+            <ng-template #pdfPreview>
+              <div
+                class="h-24 w-full rounded-lg shadow bg-indigo-50 dark:bg-indigo-900 flex flex-col items-center justify-center text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-700"
+              >
+                <mat-icon
+                  class="app-icon app-icon-xl text-indigo-600 dark:text-indigo-300"
+                  aria-hidden="true"
+                  >picture_as_pdf</mat-icon
+                >
+                <span class="text-xs font-semibold mt-1 uppercase">PDF</span>
+              </div>
+            </ng-template>
+            <button
+              type="button"
+              (click)="$event.stopPropagation(); removeSelectedFile(i)"
+              class="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white text-xs leading-6 shadow hover:bg-red-600 transition"
+              title="Retirer cette image"
+            >
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true">close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <p *ngIf="previewUrls.length > 9" class="mt-3 text-xs text-gray-400 dark:text-gray-500">
+          +{{ previewUrls.length - 9 }} autres images
+        </p>
+
+        <input
+          #fileInput
+          type="file"
+          class="hidden"
+          accept="image/*,application/pdf,.pdf"
+          multiple
+          (change)="onFileSelected($event)"
+        />
+      </div>
+
+      <!-- Nom fichier -->
+      <p *ngIf="selectedFile" class="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+        <mat-icon
+          class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+          aria-hidden="true"
+          >attach_file</mat-icon
+        >
+        {{ selectedFile.name }}
+        <span *ngIf="selectedFiles.length > 1">(+{{ selectedFiles.length - 1 }} autres)</span>
+      </p>
+
+      <!-- Erreur -->
+      <div
+        *ngIf="error"
+        class="mt-4 p-3 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg text-sm"
+      >
+        {{ error }}
+      </div>
+
+      <!-- Bouton -->
+      <button
+        (click)="uploadAndExtract()"
+        [disabled]="!selectedFiles.length || loading"
+        class="mt-6 w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        <span *ngIf="!loading" class="inline-flex items-center justify-center gap-2">
+          <mat-icon
+            class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+            aria-hidden="true"
+            >search</mat-icon
+          >
+          Extraire
+        </span>
+        <span *ngIf="loading" class="inline-flex items-center justify-center gap-2">
+          <mat-icon
+            class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+            aria-hidden="true"
+            >hourglass_empty</mat-icon
+          >
+          Extraction en cours...
+        </span>
+      </button>
+
+      <button
+        *ngIf="extractedItems.length"
+        type="button"
+        (click)="goToExtractionList()"
+        class="mt-3 w-full py-3 bg-white text-indigo-600 border border-indigo-200 rounded-xl font-semibold hover:bg-indigo-50 transition"
+      >
+        <span class="inline-flex items-center justify-center gap-2">
+          <mat-icon
+            class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+            aria-hidden="true"
+            >list</mat-icon
+          >
+          Retour à la liste des extractions ({{ extractedItems.length }})
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2 : Liste des extractions -->
+  <div *ngIf="step === 'list'">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <div class="flex justify-between items-center">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+          Sélectionnez une extraction pour ouvrir le formulaire de correction
+        </p>
+        <div class="flex items-center gap-3">
+          <button
+            *ngIf="extractedItems.length"
+            (click)="clearExtractions()"
+            class="text-sm text-red-400 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+          >
+            Vider la liste
+          </button>
+          <button
+            (click)="reset()"
+            class="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <span class="inline-flex items-center gap-1">
+              <mat-icon
+                class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+                aria-hidden="true"
+                >arrow_back</mat-icon
+              >
+              Nouvelle facture
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead
+              class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs uppercase"
+            >
+              <tr>
+                <th class="px-3 py-2 text-left">Fichier</th>
+                <th class="px-3 py-2 text-left">Vendeur</th>
+                <th class="px-3 py-2 text-left">Client</th>
+                <th class="px-3 py-2 text-left">N° Facture</th>
+                <th class="px-3 py-2 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let item of paginatedItems"
+                class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                <td class="px-3 py-2">{{ item.filename || '-' }}</td>
+                <td class="px-3 py-2">{{ item.invoice?.vendeur?.nom || '-' }}</td>
+                <td class="px-3 py-2">{{ item.invoice?.client?.nom || '-' }}</td>
+                <td class="px-3 py-2">{{ item.invoice?.facture?.numero || '-' }}</td>
+                <td class="px-3 py-2 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button
+                      (click)="openExtraction(item)"
+                      class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg text-sm hover:bg-indigo-100 dark:hover:bg-indigo-800 transition"
+                    >
+                      Ouvrir
+                    </button>
+                    <button
+                      (click)="removeExtraction(item)"
+                      class="px-3 py-2 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg text-sm hover:bg-red-100 dark:hover:bg-red-800 transition"
+                    >
+                      Suppr.
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div
+          class="mt-6 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4"
+        >
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Affichage <span class="font-semibold">{{ (currentPage - 1) * itemsPerPage + 1 }}</span>
+            à
+            <span class="font-semibold">{{
+              Math.min(currentPage * itemsPerPage, extractedItems.length)
+            }}</span>
+            sur
+            <span class="font-semibold">{{ extractedItems.length }}</span>
+            extraction{{ extractedItems.length !== 1 ? 's' : '' }}
+          </p>
+
+          <div class="flex items-center gap-2">
+            <button
+              (click)="prevPage()"
+              [disabled]="currentPage === 1"
+              class="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              title="Page précédente"
+            >
+              <span class="inline-flex items-center gap-1">
+                <mat-icon
+                  class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+                  aria-hidden="true"
+                  >chevron_left</mat-icon
+                >
+                Précédent
+              </span>
+            </button>
+
+            <div class="flex items-center gap-1">
+              <button
+                *ngFor="let page of pageNumbers"
+                (click)="goToPage(page)"
+                [class.bg-indigo-600]="currentPage === page"
+                [class.text-white]="currentPage === page"
+                [class.bg-gray-100]="currentPage !== page"
+                [class.dark:bg-gray-700]="currentPage !== page"
+                [class.text-gray-600]="currentPage !== page"
+                [class.dark:text-gray-300]="currentPage !== page"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <button
+              (click)="nextPage()"
+              [disabled]="currentPage === totalPages_computed"
+              class="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              title="Page suivante"
+            >
+              <span class="inline-flex items-center gap-1">
+                Suivant
+                <mat-icon
+                  class="app-icon app-icon-sm text-indigo-500 dark:text-indigo-400"
+                  aria-hidden="true"
+                  >chevron_right</mat-icon
+                >
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 : Formulaire correction -->
+  <div *ngIf="step === 'form' && formData">
+    <div class="max-w-5xl mx-auto space-y-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center">
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+          Vérifiez et corrigez les informations extraites
+        </p>
+        <button
+          (click)="backToList()"
+          class="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+        >
+          <span class="inline-flex items-center gap-1">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">arrow_back</mat-icon>
+            Retour à la liste
+          </span>
+        </button>
+      </div>
+
+      <!-- Vendeur + Client -->
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Vendeur -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">business</mat-icon>
+            Vendeur
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Nom *</label>
+              <input
+                [(ngModel)]="formData.vendeur_nom"
+                type="text"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Matricule Fiscal</label>
+              <input
+                [(ngModel)]="formData.vendeur_mf"
+                type="text"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Adresse</label>
+              <textarea
+                [(ngModel)]="formData.vendeur_adresse"
+                rows="2"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              ></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Téléphone</label>
+                <input
+                  [(ngModel)]="formData.vendeur_telephone"
+                  type="text"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Email</label>
+                <input
+                  [(ngModel)]="formData.vendeur_email"
+                  type="text"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+          <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">person</mat-icon>
+            Client
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Nom</label>
+              <input
+                [(ngModel)]="formData.client_nom"
+                type="text"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Matricule Fiscal</label>
+              <input
+                [(ngModel)]="formData.client_mf"
+                type="text"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              />
+            </div>
+            <div>
+              <label class="text-xs text-gray-500 dark:text-gray-400">Adresse</label>
+              <textarea
+                [(ngModel)]="formData.client_adresse"
+                rows="2"
+                class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos Facture -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">description</mat-icon>
+          Informations Facture
+        </h3>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Numéro Facture</label>
+            <input
+              [(ngModel)]="formData.numero_facture"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Type Document</label>
+            <select
+              [(ngModel)]="formData.type_document"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            >
+              <option>FACTURE</option>
+              <option>BON DE LIVRAISON</option>
+              <option>RECU</option>
+              <option>DEVIS</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Devise</label>
+            <select
+              [(ngModel)]="formData.devise"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            >
+              <option>DT</option>
+              <option>EUR</option>
+              <option>USD</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Date Facture</label>
+            <input
+              [(ngModel)]="formData.date_facture"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Date Échéance</label>
+            <input
+              [(ngModel)]="formData.date_echeance"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Lignes articles -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">list_alt</mat-icon>
+            Lignes Articles
+          </h3>
+          <button
+            (click)="addLigne()"
+            class="px-4 py-2 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg text-sm hover:bg-indigo-100 dark:hover:bg-indigo-800 transition"
+          >
+            <span class="inline-flex items-center gap-1">
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true">add</mat-icon>
+              Ajouter ligne
+            </span>
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead
+              class="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs uppercase"
+            >
+              <tr>
+                <th class="px-3 py-2 text-left">Désignation</th>
+                <th class="px-3 py-2 text-right">Qté</th>
+                <th class="px-3 py-2 text-right">PU HT</th>
+                <th class="px-3 py-2 text-right">Remise %</th>
+                <th class="px-3 py-2 text-right">Montant HT</th>
+                <th class="px-3 py-2 text-right">TVA %</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let ligne of formData.lignes; let i = index"
+                class="border-t border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.designation"
+                    type="text"
+                    class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.quantite"
+                    type="text"
+                    class="w-20 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.prix_unitaire_ht"
+                    type="text"
+                    class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.remise_pct"
+                    type="text"
+                    class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.montant_ht"
+                    type="text"
+                    class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <input
+                    [(ngModel)]="ligne.taux_tva"
+                    type="text"
+                    class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                </td>
+                <td class="px-3 py-2">
+                  <button
+                    (click)="removeLigne(i)"
+                    class="text-red-400 hover:text-red-600 text-lg transition"
+                  >
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totaux -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true"
+            >account_balance_wallet</mat-icon
+          >
+          Totaux
+        </h3>
+        <div class="grid grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Total HT</label>
+            <input
+              [(ngModel)]="formData.total_ht"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Montant TVA</label>
+            <input
+              [(ngModel)]="formData.montant_tva"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Timbre Fiscal</label>
+            <input
+              [(ngModel)]="formData.timbre_fiscal"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Total TTC</label>
+            <input
+              [(ngModel)]="formData.total_ttc"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-indigo-300 dark:border-indigo-600 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Paiement -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        <h3 class="font-semibold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">credit_card</mat-icon>
+          Paiement
+        </h3>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Mode Paiement</label>
+            <select
+              [(ngModel)]="formData.mode_paiement"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            >
+              <option value="">-- Choisir --</option>
+              <option>Virement Bancaire</option>
+              <option>Chèque</option>
+              <option>Espèces</option>
+              <option>Carte Bancaire</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Statut Paiement</label>
+            <select
+              [(ngModel)]="formData.statut_paiement"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            >
+              <option value="">-- Choisir --</option>
+              <option>Réglé</option>
+              <option>En attente</option>
+              <option>En retard</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Conditions Paiement</label>
+            <input
+              [(ngModel)]="formData.conditions_paiement"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Date Règlement</label>
+            <input
+              [(ngModel)]="formData.date_reglement"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 dark:text-gray-400">Montant en lettres</label>
+            <input
+              [(ngModel)]="formData.montant_en_lettres"
+              type="text"
+              class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Erreur -->
+      <div
+        *ngIf="error"
+        class="p-3 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-lg text-sm"
+      >
+        {{ error }}
+      </div>
+
+      <!-- Bouton Save -->
+      <button
+        (click)="confirmAndSave()"
+        [disabled]="loading"
+        class="w-full py-4 bg-green-600 text-white rounded-xl font-semibold text-lg hover:bg-green-700 disabled:opacity-50 transition"
+      >
+        <span *ngIf="!loading" class="inline-flex items-center justify-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">check_circle</mat-icon>
+          Confirmer et Sauvegarder
+        </span>
+        <span *ngIf="loading" class="inline-flex items-center justify-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">hourglass_empty</mat-icon>
+          Sauvegarde en cours...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 3 : Succès -->
+  <div *ngIf="step === 'success'" class="max-w-md mx-auto text-center py-16">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-12">
+      <mat-icon
+        class="app-icon app-icon-hero mb-4 text-green-600 dark:text-green-400"
+        aria-hidden="true"
+        >check_circle</mat-icon
+      >
+      <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Facture sauvegardée !</h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">
+        La facture a été ajoutée à la base de données et indexée dans ChromaDB.
+      </p>
+      <div
+        *ngIf="saveWarning"
+        class="mb-6 p-3 bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 rounded-lg text-sm"
+      >
+        {{ saveWarning }}
+      </div>
+      <div class="flex items-center justify-center gap-3">
+        <button
+          *ngIf="extractedItems.length"
+          (click)="continueWithOtherExtractions()"
+          class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">list</mat-icon>
+            Continuer avec la liste
+          </span>
+        </button>
+        <button
+          (click)="reset()"
+          class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">cloud_upload</mat-icon>
+            Nouvelle facture
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

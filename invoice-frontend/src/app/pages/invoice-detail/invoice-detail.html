@@ -1,0 +1,630 @@
+<div class="p-8 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+  <div *ngIf="loading" class="text-center py-20 text-gray-400">
+    <mat-icon class="app-icon app-icon-hero mb-3 text-gray-400" aria-hidden="true"
+      >hourglass_empty</mat-icon
+    >
+    <p>Chargement...</p>
+  </div>
+
+  <div *ngIf="error && !invoice" class="text-center py-20 text-red-400">
+    <mat-icon class="app-icon app-icon-hero mb-3 text-red-400" aria-hidden="true">error</mat-icon>
+    <p>{{ error }}</p>
+    <button
+      (click)="goBack()"
+      class="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-xl inline-flex items-center gap-2"
+    >
+      <mat-icon class="app-icon app-icon-sm" aria-hidden="true">arrow_back</mat-icon>
+      Retour
+    </button>
+  </div>
+
+  <div *ngIf="!loading && invoice">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-4">
+        <button
+          (click)="goBack()"
+          class="w-10 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition dark:text-gray-300"
+        >
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">arrow_back</mat-icon>
+        </button>
+        <div>
+          <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
+            {{ invoice.numero_facture || 'Facture sans numéro' }}
+          </h2>
+          <p class="text-gray-400 dark:text-gray-500 text-sm mt-1">
+            <span
+              class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded text-xs font-semibold mr-2"
+              >{{ invoice.type_document }}</span
+            >
+            Créée le {{ invoice.cree_le | date: 'dd/MM/yyyy' }}
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <span
+          *ngIf="success"
+          class="px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-xl text-sm font-semibold"
+          >{{ success }}</span
+        >
+        <button
+          (click)="toggleEdit()"
+          class="px-5 py-2.5 rounded-xl font-semibold text-sm transition"
+          [class.bg-indigo-600]="!editMode"
+          [class.text-white]="!editMode"
+          [class.bg-gray-200]="editMode"
+          [class.dark:bg-gray-700]="editMode"
+          [class.text-gray-700]="editMode"
+          [class.dark:text-gray-300]="editMode"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">
+              {{ editMode ? 'close' : 'edit' }}
+            </mat-icon>
+            {{ editMode ? 'Annuler' : 'Modifier' }}
+          </span>
+        </button>
+        <button
+          *ngIf="editMode"
+          (click)="save()"
+          [disabled]="saving"
+          class="px-5 py-2.5 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">
+              {{ saving ? 'hourglass_empty' : 'save' }}
+            </mat-icon>
+            {{ saving ? 'Sauvegarde...' : 'Sauvegarder' }}
+          </span>
+        </button>
+        <button
+          *ngIf="canDeleteInvoice"
+          (click)="confirmDelete()"
+          [disabled]="deleting"
+          class="px-5 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 disabled:opacity-50 transition"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">
+              {{ deleting ? 'hourglass_empty' : 'delete' }}
+            </mat-icon>
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div
+      *ngIf="error"
+      class="mb-4 px-4 py-3 bg-red-50 dark:bg-red-900 text-red-600 dark:text-red-300 rounded-xl text-sm"
+    >
+      {{ error }}
+    </div>
+
+    <!-- Grid principal -->
+    <div class="grid grid-cols-3 gap-6 mb-6">
+      <!-- Image -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+      >
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">description</mat-icon>
+          Document original
+        </h3>
+        <div
+          class="relative overflow-hidden rounded-xl border border-gray-100 dark:border-gray-700 cursor-zoom-in"
+          style="max-height: 500px"
+          (mouseenter)="isZoomed = true"
+          (mouseleave)="isZoomed = false; zoomX = 50; zoomY = 50"
+          (mousemove)="onMouseMove($event)"
+        >
+          <img
+            [src]="imageUrl"
+            alt="Facture"
+            class="w-full object-contain transition-transform duration-100"
+            [style.transform]="isZoomed ? 'scale(2.5)' : 'scale(1)'"
+            [style.transform-origin]="zoomX + '% ' + zoomY + '%'"
+            (error)="imageUrl = ''"
+          />
+        </div>
+        <div
+          *ngIf="!imageUrl"
+          class="flex flex-col items-center justify-center py-16 text-gray-300 border border-gray-100 dark:border-gray-700 rounded-xl"
+        >
+          <mat-icon class="app-icon app-icon-hero mb-2 text-gray-300" aria-hidden="true"
+            >image_not_supported</mat-icon
+          >
+          <p class="text-sm">Image non disponible</p>
+        </div>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-3 text-center truncate">
+          {{ invoice.source_file }}
+        </p>
+        <button
+          (click)="openFullscreen()"
+          class="mt-3 w-full py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center gap-2"
+        >
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">zoom_in</mat-icon>
+          Voir en plein écran
+        </button>
+      </div>
+
+      <!-- Infos droite -->
+      <div class="col-span-2 flex flex-col gap-6">
+        <!-- Vendeur + Client -->
+        <div class="grid grid-cols-2 gap-6">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+          >
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true">business</mat-icon>
+              Vendeur
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Nom / Raison sociale</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.vendeur_nom"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="font-semibold text-gray-800 dark:text-gray-200 mt-1">
+                  {{ invoice.vendeur_nom || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Matricule fiscal</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.vendeur_mf"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.vendeur_mf || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Adresse</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.vendeur_adresse"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.vendeur_adresse || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Téléphone</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.vendeur_telephone"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.vendeur_telephone || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Email</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.vendeur_email"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.vendeur_email || '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+          >
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true">person</mat-icon>
+              Client
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Nom / Raison sociale</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.client_nom"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="font-semibold text-gray-800 dark:text-gray-200 mt-1">
+                  {{ invoice.client_nom || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Matricule fiscal</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.client_mf"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.client_mf || '—' }}
+                </p>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 dark:text-gray-500">Adresse</label>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.client_adresse"
+                  class="w-full mt-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-200"
+                />
+                <p *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 mt-1">
+                  {{ invoice.client_adresse || '—' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Infos facture + Totaux -->
+        <div class="grid grid-cols-2 gap-6">
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+          >
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true">description</mat-icon>
+              Informations facture
+            </h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Numéro</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.numero_facture"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span
+                  *ngIf="!editMode"
+                  class="font-semibold text-gray-800 dark:text-gray-200 text-sm"
+                  >{{ invoice.numero_facture || '—' }}</span
+                >
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Date</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.date_facture"
+                  type="date"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 text-sm">{{
+                  invoice.date_facture || '—'
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Échéance</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.date_echeance"
+                  type="date"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 text-sm">{{
+                  invoice.date_echeance || '—'
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">N° BC</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.numero_bc"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 text-sm">{{
+                  invoice.numero_bc || '—'
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Mode paiement</span>
+                <select
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.mode_paiement"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                >
+                  <option value="">—</option>
+                  <option value="Virement Bancaire">Virement Bancaire</option>
+                  <option value="Chèque">Chèque</option>
+                  <option value="Espèces">Espèces</option>
+                  <option value="Carte Bancaire">Carte Bancaire</option>
+                  <option value="virement">virement</option>
+                </select>
+                <span *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 text-sm">{{
+                  invoice.mode_paiement || '—'
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Statut paiement</span>
+                <select
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.statut_paiement"
+                  class="w-40 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                >
+                  <option value="">N/A</option>
+                  <option value="Payé">Payé</option>
+                  <option value="En attente">En attente</option>
+                  <option value="En retard">En retard</option>
+                </select>
+                <span
+                  *ngIf="!editMode"
+                  class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                  [class.bg-green-100]="invoice.statut_paiement === 'Payé'"
+                  [class.text-green-700]="invoice.statut_paiement === 'Payé'"
+                  [class.bg-yellow-100]="invoice.statut_paiement === 'En attente'"
+                  [class.text-yellow-700]="invoice.statut_paiement === 'En attente'"
+                  [class.bg-red-100]="invoice.statut_paiement === 'En retard'"
+                  [class.text-red-700]="invoice.statut_paiement === 'En retard'"
+                  [class.bg-gray-100]="!invoice.statut_paiement"
+                  [class.text-gray-400]="!invoice.statut_paiement"
+                >
+                  {{ invoice.statut_paiement || 'N/A' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
+          >
+            <h3 class="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+              <mat-icon class="app-icon app-icon-sm" aria-hidden="true"
+                >account_balance_wallet</mat-icon
+              >
+              Totaux
+            </h3>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Total HT</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.total_ht"
+                  type="number"
+                  class="w-36 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span
+                  *ngIf="!editMode"
+                  class="text-gray-700 dark:text-gray-300 text-sm font-medium"
+                  >{{ formatRawAmount(invoice.total_ht) }}</span
+                >
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Taux TVA</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.taux_tva"
+                  type="number"
+                  class="w-36 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-700 dark:text-gray-300 text-sm">{{
+                  formatPercent(invoice.taux_tva)
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Montant TVA</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.montant_tva"
+                  type="number"
+                  class="w-36 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-700 dark:text-gray-300 text-sm">{{
+                  formatRawAmount(invoice.montant_tva)
+                }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Timbre fiscal</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.timbre_fiscal"
+                  type="number"
+                  class="w-36 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-700 dark:text-gray-300 text-sm">{{
+                  formatRawAmount(invoice.timbre_fiscal)
+                }}</span>
+              </div>
+              <div
+                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3"
+              >
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-200">Total TTC</span>
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.total_ttc"
+                  type="number"
+                  class="w-36 px-2 py-1 border border-indigo-300 rounded text-sm text-right font-bold dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                />
+                <span *ngIf="!editMode" class="font-bold text-indigo-700 dark:text-indigo-400">
+                  {{ displayAmount(invoice.total_ttc, invoice.devise) }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-xs text-gray-400 dark:text-gray-500">Devise</span>
+                <select
+                  *ngIf="editMode"
+                  [(ngModel)]="invoice.devise"
+                  class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                >
+                  <option value="DT">DT</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                </select>
+                <span *ngIf="!editMode" class="text-gray-600 dark:text-gray-400 text-sm">{{
+                  invoice.devise || 'DT'
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lignes articles -->
+    <div
+      class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6"
+    >
+      <div
+        class="p-6 border-b border-gray-50 dark:border-gray-700 flex justify-between items-center"
+      >
+        <h3 class="font-bold text-gray-700 dark:text-gray-200 text-lg flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-sm" aria-hidden="true">list_alt</mat-icon>
+          Lignes articles
+        </h3>
+        <button
+          *ngIf="editMode"
+          (click)="addLigne()"
+          class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm hover:bg-indigo-700 transition"
+        >
+          <span class="inline-flex items-center gap-2">
+            <mat-icon class="app-icon app-icon-sm" aria-hidden="true">add</mat-icon>
+            Ajouter ligne
+          </span>
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr
+              class="bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-400 text-xs uppercase"
+            >
+              <th class="px-5 py-3 text-left">Désignation</th>
+              <th class="px-5 py-3 text-left">Code</th>
+              <th class="px-5 py-3 text-right">Qté</th>
+              <th class="px-5 py-3 text-left">Unité</th>
+              <th class="px-5 py-3 text-right">PU HT</th>
+              <th class="px-5 py-3 text-right">Remise %</th>
+              <th class="px-5 py-3 text-right">Montant HT</th>
+              <th class="px-5 py-3 text-right">TVA %</th>
+              <th *ngIf="editMode" class="px-5 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+            <tr *ngIf="!invoice.lignes || invoice.lignes.length === 0">
+              <td colspan="9" class="text-center py-10 text-gray-300 dark:text-gray-600">
+                Aucune ligne article
+              </td>
+            </tr>
+            <tr
+              *ngFor="let l of invoice.lignes; let i = index"
+              class="hover:bg-indigo-900 dark:hover:bg-indigo-900 transition"
+              [ngClass]="i % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'"
+            >
+              <td class="px-5 py-3">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.designation"
+                  class="w-full px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-800 dark:text-gray-200">{{
+                  l.designation || '—'
+                }}</span>
+              </td>
+              <td class="px-5 py-3">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.code_article"
+                  class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-500 dark:text-gray-400 text-xs">{{
+                  l.code_article || '—'
+                }}</span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.quantite"
+                  type="number"
+                  class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="dark:text-gray-300">{{ l.quantite || '—' }}</span>
+              </td>
+              <td class="px-5 py-3">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.unite"
+                  class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="text-gray-500 dark:text-gray-400">{{
+                  l.unite || '—'
+                }}</span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.prix_unitaire_ht"
+                  type="number"
+                  class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="dark:text-gray-300">{{
+                  formatRawAmount(l.prix_unitaire_ht)
+                }}</span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.remise_pct"
+                  type="number"
+                  class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="dark:text-gray-300">{{
+                  formatPercent(l.remise_pct)
+                }}</span>
+              </td>
+              <td class="px-5 py-3 text-right font-semibold">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.montant_ht"
+                  type="number"
+                  class="w-24 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="dark:text-gray-300">{{
+                  formatRawAmount(l.montant_ht)
+                }}</span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <input
+                  *ngIf="editMode"
+                  [(ngModel)]="l.taux_tva"
+                  type="number"
+                  class="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded text-sm text-right dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                />
+                <span *ngIf="!editMode" class="dark:text-gray-300">{{
+                  formatPercent(l.taux_tva)
+                }}</span>
+              </td>
+              <td *ngIf="editMode" class="px-5 py-3 text-center">
+                <button
+                  (click)="removeLigne(i)"
+                  class="text-red-400 hover:text-red-600 transition font-bold text-lg"
+                >
+                  <mat-icon class="app-icon app-icon-sm" aria-hidden="true">close</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal plein écran -->
+  <div
+    *ngIf="fullscreen"
+    class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+    (click)="fullscreen = false"
+  >
+    <button class="absolute top-4 right-4 text-white hover:text-gray-300 transition">
+      <mat-icon class="app-icon app-icon-xl" aria-hidden="true">close</mat-icon>
+    </button>
+    <img
+      [src]="imageUrl"
+      alt="Facture"
+      class="max-w-full max-h-full object-contain rounded-xl"
+      (click)="$event.stopPropagation()"
+    />
+  </div>
+</div>

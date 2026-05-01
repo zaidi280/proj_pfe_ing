@@ -1,0 +1,425 @@
+<div
+  class="flex flex-col h-screen p-6 bg-[#F5F6FA] dark:bg-[#0F1117] transition-colors duration-300"
+>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <p
+        class="text-[10px] font-semibold tracking-widest text-gray-400 dark:text-gray-600 uppercase mb-1"
+      >
+        IA
+      </p>
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Agent IA</h2>
+      <p class="text-gray-400 dark:text-gray-500 text-sm mt-0.5">
+        Posez vos questions sur les factures —
+        <span class="text-violet-600 dark:text-violet-400 font-semibold">UNILOG</span>
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        (click)="showSql = !showSql"
+        class="flex items-center gap-2 px-4 py-2 text-sm rounded-xl border transition"
+        [class.bg-violet-50]="showSql"
+        [class.dark:bg-violet-900/20]="showSql"
+        [class.text-violet-600]="showSql"
+        [class.dark:text-violet-400]="showSql"
+        [class.border-violet-200]="showSql"
+        [class.dark:border-violet-700]="showSql"
+        [class.bg-white]="!showSql"
+        [class.dark:bg-gray-800]="!showSql"
+        [class.text-gray-500]="!showSql"
+        [class.dark:text-gray-400]="!showSql"
+        [class.border-gray-200]="!showSql"
+        [class.dark:border-gray-700]="!showSql"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+          />
+        </svg>
+        {{ showSql ? 'Filtre Mongo visible' : 'Voir filtre Mongo' }}
+      </button>
+      <button
+        (click)="clearChat()"
+        class="flex items-center gap-2 px-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
+        Effacer
+      </button>
+    </div>
+  </div>
+
+  <!-- Suggestions -->
+  <div *ngIf="messages.length <= 1" class="mb-4 flex flex-wrap gap-2">
+    <button
+      *ngFor="let s of suggestions"
+      (click)="useSuggestion(s)"
+      class="px-4 py-2 bg-white dark:bg-[#1A1D2E] border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl text-xs hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-400 dark:hover:border-violet-700 transition shadow-sm flex items-center gap-2"
+    >
+      <svg
+        class="w-3.5 h-3.5 text-violet-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+      {{ s }}
+    </button>
+  </div>
+
+  <!-- Messages -->
+  <div
+    id="chat-messages"
+    class="flex-1 overflow-y-auto space-y-5 mb-4 bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm"
+  >
+    <div
+      *ngFor="let msg of messages; let i = index"
+      class="flex gap-3 items-start"
+      [class.flex-row-reverse]="msg.role === 'user'"
+    >
+      <!-- Avatar -->
+      <div
+        class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+        [class.bg-gradient-to-br]="msg.role === 'agent'"
+        [class.from-violet-500]="msg.role === 'agent'"
+        [class.to-indigo-600]="msg.role === 'agent'"
+        [class.bg-gray-100]="msg.role === 'user'"
+        [class.dark:bg-gray-700]="msg.role === 'user'"
+      >
+        <svg
+          *ngIf="msg.role === 'agent'"
+          class="w-4 h-4 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+          />
+        </svg>
+        <svg
+          *ngIf="msg.role === 'user'"
+          class="w-4 h-4 text-gray-500 dark:text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
+        </svg>
+      </div>
+
+      <!-- Bubble + actions -->
+      <div [class.ml-auto]="msg.role === 'user'" class="max-w-2xl w-full space-y-1.5">
+        <!-- Bulle texte -->
+        <div
+          class="px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm"
+          [class.bg-violet-600]="msg.role === 'user'"
+          [class.text-white]="msg.role === 'user'"
+          [class.rounded-tr-sm]="msg.role === 'user'"
+          [class.bg-gray-50]="msg.role === 'agent'"
+          [class.dark:bg-gray-800]="msg.role === 'agent'"
+          [class.text-gray-800]="msg.role === 'agent'"
+          [class.dark:text-gray-200]="msg.role === 'agent'"
+          [class.border]="msg.role === 'agent'"
+          [class.border-gray-100]="msg.role === 'agent'"
+          [class.dark:border-gray-700]="msg.role === 'agent'"
+          [class.rounded-tl-sm]="msg.role === 'agent'"
+        >
+          <!-- Message user : texte simple -->
+          <span *ngIf="msg.role === 'user'">{{ msg.content }}</span>
+
+          <!-- Message agent : formaté -->
+          <!-- Message agent : formaté -->
+          <div
+            *ngIf="msg.role === 'agent'"
+            class="agent-content"
+            [innerHTML]="formatHtml(msg.content)"
+          ></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-2 px-1 items-center" [class.justify-end]="msg.role === 'user'">
+          <button
+            *ngIf="msg.role === 'agent' && msg.pdfBase64"
+            (click)="downloadMessagePdf(msg)"
+            class="text-[10px] text-violet-500 hover:text-violet-700 flex items-center gap-1 transition"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 16v-8m0 8l-3-3m3 3l3-3M5 20h14"
+              />
+            </svg>
+            Télécharger PDF
+          </button>
+
+          <button
+            (click)="copyMessage(msg.content, i)"
+            class="text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-1 transition"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+              />
+            </svg>
+            {{ copiedIndex === i ? 'Copié !' : 'Copier' }}
+          </button>
+
+          <!-- Évaluation -->
+          <ng-container *ngIf="msg.role === 'agent' && i > 0">
+            <span class="text-gray-200 dark:text-gray-700">|</span>
+            <ng-container *ngIf="!msg.rating">
+              <button
+                (click)="rateMessage(i, 'up')"
+                class="text-[10px] text-gray-400 dark:text-gray-500 hover:text-emerald-500 transition flex items-center gap-1"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                  />
+                </svg>
+                Utile
+              </button>
+              <button
+                (click)="rateMessage(i, 'down')"
+                class="text-[10px] text-gray-400 dark:text-gray-500 hover:text-red-500 transition flex items-center gap-1"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"
+                  />
+                </svg>
+                Pas utile
+              </button>
+            </ng-container>
+            <span
+              *ngIf="msg.rating === 'up'"
+              class="text-[10px] text-emerald-500 flex items-center gap-1"
+            >
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                />
+              </svg>
+              Merci !
+            </span>
+            <span
+              *ngIf="msg.rating === 'down'"
+              class="text-[10px] text-red-400 flex items-center gap-1"
+            >
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"
+                />
+              </svg>
+              Noté
+            </span>
+          </ng-container>
+        </div>
+
+        <!-- SQL -->
+        <div
+          *ngIf="showSql && msg.sql"
+          class="bg-[#0F1117] rounded-xl p-4 text-xs font-mono overflow-x-auto border border-gray-800"
+        >
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+              <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <span class="text-gray-500 text-[10px] ml-1">Filtre Mongo généré</span>
+            </div>
+            <button
+              (click)="copyMessage(msg.sql!, -1)"
+              class="text-gray-500 hover:text-gray-300 text-[10px] flex items-center gap-1 transition"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+              Copier
+            </button>
+          </div>
+          <span class="text-emerald-400">{{ msg.sql }}</span>
+        </div>
+
+        <!-- Timestamp -->
+        <p
+          class="text-[10px] text-gray-300 dark:text-gray-600 px-1"
+          [class.text-right]="msg.role === 'user'"
+        >
+          {{ msg.timestamp | date: 'HH:mm' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Loading bubble -->
+    <!-- Loading bubble -->
+    <div *ngIf="loading" class="flex gap-3 items-start">
+      <div
+        class="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-sm"
+      >
+        <svg
+          class="w-4 h-4 text-white animate-spin"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      </div>
+      <div
+        class="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm min-w-[220px]"
+      >
+        <div class="flex gap-1.5 items-center mb-2">
+          <span
+            class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce"
+            style="animation-delay: 0ms"
+          ></span>
+          <span
+            class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce"
+            style="animation-delay: 150ms"
+          ></span>
+          <span
+            class="w-1.5 h-1.5 bg-violet-500 rounded-full animate-bounce"
+            style="animation-delay: 300ms"
+          ></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1 font-medium">{{
+            loadingStep
+          }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input bar -->
+  <div
+    class="bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-3 flex gap-3 items-end shadow-sm"
+  >
+    <textarea
+      [(ngModel)]="question"
+      (keydown)="onKeyDown($event)"
+      placeholder="Posez une question sur vos factures... (Entrée pour envoyer)"
+      rows="2"
+      class="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 focus:bg-white dark:focus:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500 transition"
+    >
+    </textarea>
+
+    <!-- Mic -->
+    <button
+      (click)="toggleMic()"
+      class="w-11 h-11 rounded-xl flex items-center justify-center transition"
+      [class.bg-red-500]="isListening"
+      [class.hover:bg-red-600]="isListening"
+      [class.text-white]="isListening"
+      [class.bg-gray-100]="!isListening"
+      [class.dark:bg-gray-700]="!isListening"
+      [class.hover:bg-gray-200]="!isListening"
+      [class.dark:hover:bg-gray-600]="!isListening"
+      [title]="isListening ? 'Arrêter' : 'Parler'"
+    >
+      <svg
+        *ngIf="!isListening"
+        class="w-4 h-4 text-gray-500 dark:text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+        />
+      </svg>
+      <svg *ngIf="isListening" class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M6 6h12v12H6z" />
+      </svg>
+    </button>
+
+    <!-- Send -->
+    <button
+      (click)="ask()"
+      [disabled]="!question.trim() || loading"
+      class="px-5 h-11 bg-violet-600 text-white rounded-xl font-semibold text-sm hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-sm shadow-violet-200 dark:shadow-violet-900/30"
+    >
+      <svg *ngIf="!loading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+        />
+      </svg>
+      <svg
+        *ngIf="loading"
+        class="w-4 h-4 animate-spin"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      </svg>
+      {{ loading ? '' : 'Envoyer' }}
+    </button>
+  </div>
+
+  <!-- Mic status -->
+  <p
+    *ngIf="isListening"
+    class="text-center text-xs text-red-500 mt-2 animate-pulse flex items-center justify-center gap-1.5"
+  >
+    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+    Écoute en cours... parlez maintenant
+  </p>
+  <p *ngIf="micError" class="text-center text-xs text-red-400 mt-2">{{ micError }}</p>
+</div>

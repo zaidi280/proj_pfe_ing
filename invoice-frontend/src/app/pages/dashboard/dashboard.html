@@ -1,0 +1,432 @@
+<div class="p-8 bg-[#F5F6FA] dark:bg-[#0F1117] min-h-screen transition-colors duration-300">
+  <!-- Hero Header Banner -->
+  <div
+    class="relative rounded-2xl overflow-hidden mb-8 p-8"
+    style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #a855f7 70%, #7c3aed 100%)"
+  >
+    <!-- Background decoration -->
+    <div
+      class="absolute inset-0 opacity-20"
+      style="
+        background-image:
+          radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%);
+      "
+    ></div>
+    <div
+      class="absolute top-0 right-0 w-64 h-64 opacity-10"
+      style="
+        background: radial-gradient(circle, white 0%, transparent 70%);
+        transform: translate(30%, -30%);
+      "
+    ></div>
+
+    <div class="relative z-10 flex items-center justify-between">
+      <div>
+        <p class="text-violet-200 text-sm font-medium mb-1">
+          {{ today | date: 'EEEE d MMMM yyyy' : '' : 'fr' }}
+        </p>
+        <h2 class="text-white text-3xl font-bold mb-1 flex items-center gap-2">
+          <mat-icon class="app-icon app-icon-lg text-amber-300" aria-hidden="true"
+            >waving_hand</mat-icon
+          >
+          Bonjour, {{ userDisplayName }}
+        </h2>
+        <p class="text-violet-200 text-sm">
+          Voici ce qui se passe sur votre plateforme aujourd'hui.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stats inside banner -->
+    <div class="relative z-10 grid grid-cols-4 gap-4 mt-8">
+      <div
+        class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <svg
+            class="w-4 h-4 text-violet-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <p class="text-violet-200 text-xs font-medium">Total Factures</p>
+        </div>
+        <p class="text-white text-2xl font-bold">{{ stats.total_factures }}</p>
+        <p class="text-violet-300 text-xs mt-1">
+          <span class="inline-flex items-center gap-1 text-emerald-300 font-semibold">
+            <mat-icon class="app-icon app-icon-sm text-emerald-300" aria-hidden="true"
+              >check_circle</mat-icon
+            >
+            {{ stats.reglees }}
+          </span>
+          payées
+        </p>
+      </div>
+
+      <div
+        class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <svg
+            class="w-4 h-4 text-violet-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p class="text-violet-200 text-xs font-medium">Total TTC</p>
+        </div>
+        <p class="text-white text-2xl font-bold">{{ formatRawAmount(stats.total_ttc) }}</p>
+        <p class="text-violet-300 text-xs mt-1">Dinar Tunisien (DT)</p>
+      </div>
+
+      <div
+        class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <svg
+            class="w-4 h-4 text-violet-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
+          </svg>
+          <p class="text-violet-200 text-xs font-medium">Vendeurs</p>
+        </div>
+        <p class="text-white text-2xl font-bold">{{ stats.vendeurs }}</p>
+        <p class="text-violet-300 text-xs mt-1">vendeurs distincts</p>
+      </div>
+
+      <div
+        class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition"
+      >
+        <div class="flex items-center gap-2 mb-2">
+          <svg
+            class="w-4 h-4 text-violet-200"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <p class="text-violet-200 text-xs font-medium">Clients</p>
+        </div>
+        <p class="text-white text-2xl font-bold">{{ stats.clients }}</p>
+        <p class="text-violet-300 text-xs mt-1">clients distincts</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div
+    [style.display]="loading ? 'flex' : 'none'"
+    class="flex-col items-center justify-center py-24 text-gray-400"
+  >
+    <div
+      class="w-12 h-12 rounded-full border-4 border-violet-200 dark:border-violet-900 border-t-violet-600 animate-spin mb-4"
+    ></div>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Chargement des données...</p>
+  </div>
+
+  <!-- Row 2 : Line + Doughnut -->
+  <div [style.display]="loading ? 'none' : 'grid'" class="grid-cols-3 gap-5 mb-5">
+    <div
+      class="col-span-2 bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm"
+    >
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-gray-800 dark:text-white text-base">Évolution mensuelle du CA</h3>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="text-[11px] px-2.5 py-1 rounded-full border transition"
+            [class.bg-violet-600]="monthlyRange === '6m'"
+            [class.text-white]="monthlyRange === '6m'"
+            [class.border-violet-600]="monthlyRange === '6m'"
+            [class.bg-gray-50]="monthlyRange !== '6m'"
+            [class.text-gray-500]="monthlyRange !== '6m'"
+            [class.border-gray-200]="monthlyRange !== '6m'"
+            (click)="setMonthlyRange('6m')"
+          >
+            6 mois
+          </button>
+          <button
+            type="button"
+            class="text-[11px] px-2.5 py-1 rounded-full border transition"
+            [class.bg-violet-600]="monthlyRange === '12m'"
+            [class.text-white]="monthlyRange === '12m'"
+            [class.border-violet-600]="monthlyRange === '12m'"
+            [class.bg-gray-50]="monthlyRange !== '12m'"
+            [class.text-gray-500]="monthlyRange !== '12m'"
+            [class.border-gray-200]="monthlyRange !== '12m'"
+            (click)="setMonthlyRange('12m')"
+          >
+            12 mois
+          </button>
+          <button
+            type="button"
+            class="text-[11px] px-2.5 py-1 rounded-full border transition"
+            [class.bg-violet-600]="monthlyRange === 'all'"
+            [class.text-white]="monthlyRange === 'all'"
+            [class.border-violet-600]="monthlyRange === 'all'"
+            [class.bg-gray-50]="monthlyRange !== 'all'"
+            [class.text-gray-500]="monthlyRange !== 'all'"
+            [class.border-gray-200]="monthlyRange !== 'all'"
+            (click)="setMonthlyRange('all')"
+          >
+            Tout
+          </button>
+          <span
+            class="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full"
+            >Total TTC en DT</span
+          >
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">Montants convertis en DT par mois</p>
+      <p class="text-[11px] text-gray-400 dark:text-gray-500 mb-4">
+        Astuce: survolez un point pour voir le montant exact.
+      </p>
+      <div class="h-[310px] md:h-[340px]">
+        <canvas #chartMensuel class="w-full h-full"></canvas>
+      </div>
+    </div>
+    <div
+      class="bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm"
+    >
+      <h3 class="font-bold text-gray-800 dark:text-white text-base mb-1">Statut des paiements</h3>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mb-5">Répartition des factures</p>
+      <canvas #chartStatut style="max-height: 260px"></canvas>
+    </div>
+  </div>
+
+  <!-- Row 3 : Bar + KPIs -->
+  <div [style.display]="loading ? 'none' : 'grid'" class="grid-cols-3 gap-5 mb-5">
+    <div
+      class="col-span-2 bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm"
+    >
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-gray-800 dark:text-white text-base">Total TTC par vendeur</h3>
+        <span
+          class="text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-full"
+          >Montants en DT</span
+        >
+      </div>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">
+        Classement des vendeurs (Top 12 + Autres)
+      </p>
+      <p class="text-[11px] text-gray-400 dark:text-gray-500 mb-4">
+        Les noms longs sont abrégés, le nom complet apparaît au survol.
+      </p>
+      <div class="h-[340px] md:h-[380px]">
+        <canvas #chartVendeur class="w-full h-full"></canvas>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div
+      class="bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm"
+    >
+      <h3 class="font-bold text-gray-800 dark:text-white text-base mb-4">Indicateurs clés</h3>
+      <div class="space-y-3">
+        <div
+          class="flex items-center justify-between p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-violet-500"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400">Facture max TTC</span>
+          </div>
+          <span class="text-xs font-bold text-violet-600 dark:text-violet-400"
+            >{{ formatRawAmount(stats.max_ttc) }} DT</span
+          >
+        </div>
+        <div
+          class="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400">Facture min TTC</span>
+          </div>
+          <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400"
+            >{{ formatRawAmount(stats.min_ttc) }} DT</span
+          >
+        </div>
+        <div
+          class="flex items-center justify-between p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400">Taux de paiement</span>
+          </div>
+          <span class="text-xs font-bold text-blue-600 dark:text-blue-400"
+            >{{ stats.payment_rate | number: '1.0-1' }}%</span
+          >
+        </div>
+        <div
+          class="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20"
+        >
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400">Factures payées</span>
+          </div>
+          <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">{{
+            stats.reglees
+          }}</span>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-900/20">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+            <span class="text-xs text-gray-600 dark:text-gray-400">Non payées</span>
+          </div>
+          <span class="text-xs font-bold text-red-500 dark:text-red-400">{{
+            stats.non_reglees
+          }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4 : Dernières factures -->
+  <div
+    [style.display]="loading ? 'none' : 'block'"
+    class="bg-white dark:bg-[#1A1D2E] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden"
+  >
+    <div
+      class="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between"
+    >
+      <div>
+        <h3 class="font-bold text-gray-800 dark:text-white text-base">Dernières factures</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          Les 5 factures les plus récentes
+        </p>
+      </div>
+      <a
+        routerLink="/invoices"
+        class="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 transition"
+      >
+        Voir tout
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+            <th
+              class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Numéro
+            </th>
+            <th
+              class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Vendeur
+            </th>
+            <th
+              class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Client
+            </th>
+            <th
+              class="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Date
+            </th>
+            <th
+              class="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Total TTC
+            </th>
+            <th
+              class="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Devise
+            </th>
+            <th
+              class="px-6 py-3.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+            >
+              Statut
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50 dark:divide-gray-800">
+          <tr
+            *ngFor="let inv of invoices.slice(0, 5)"
+            class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150"
+          >
+            <td class="px-6 py-4 font-semibold text-violet-600 dark:text-violet-400 text-sm">
+              {{ inv.numero_facture || '—' }}
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-800 dark:text-gray-200 text-sm">
+              {{ inv.vendeur_nom || '—' }}
+            </td>
+            <td class="px-6 py-4 text-gray-500 dark:text-gray-400 text-sm">
+              {{ inv.client_nom || '—' }}
+            </td>
+            <td class="px-6 py-4 text-gray-400 dark:text-gray-500 text-sm">
+              {{ inv.date_facture || '—' }}
+            </td>
+            <td class="px-6 py-4 text-right font-bold text-gray-800 dark:text-gray-200 text-sm">
+              {{ displayAmount(inv.total_ttc, inv.devise) }}
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span
+                class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold"
+                [class.bg-blue-50]="inv.devise === 'DT' || !inv.devise"
+                [class.text-blue-700]="inv.devise === 'DT' || !inv.devise"
+                [class.bg-amber-50]="inv.devise === 'EUR'"
+                [class.text-amber-700]="inv.devise === 'EUR'"
+                [class.bg-emerald-50]="inv.devise === 'USD'"
+                [class.text-emerald-700]="inv.devise === 'USD'"
+              >
+                {{ inv.devise || 'DT' }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                [class.bg-emerald-100]="normalizePaymentStatus(inv.statut_paiement) === 'Payé'"
+                [class.text-emerald-700]="normalizePaymentStatus(inv.statut_paiement) === 'Payé'"
+                [class.bg-amber-100]="normalizePaymentStatus(inv.statut_paiement) === 'En attente'"
+                [class.text-amber-700]="
+                  normalizePaymentStatus(inv.statut_paiement) === 'En attente'
+                "
+                [class.bg-red-100]="normalizePaymentStatus(inv.statut_paiement) === 'En retard'"
+                [class.text-red-700]="normalizePaymentStatus(inv.statut_paiement) === 'En retard'"
+                [class.bg-gray-100]="normalizePaymentStatus(inv.statut_paiement) === 'N/A'"
+                [class.text-gray-500]="normalizePaymentStatus(inv.statut_paiement) === 'N/A'"
+              >
+                {{ normalizePaymentStatus(inv.statut_paiement) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

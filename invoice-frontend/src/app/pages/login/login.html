@@ -1,0 +1,126 @@
+<section class="auth-shell">
+  <div class="auth-background"></div>
+
+  <div class="auth-grid">
+    <aside class="auth-brand-panel">
+      <div class="brand-badge">
+        <span class="badge-dot"></span>
+        <span>INET PLATFORM</span>
+      </div>
+
+      <h1>Platform intelligent, simplifiez la gestion de vos factures</h1>
+      <p>
+        Centralisez vos documents, suivez vos indicateurs en temps reel et collaborez avec votre
+        equipe depuis une interface moderne.
+      </p>
+
+      <div class="invoice-visual" aria-hidden="true">
+        <div class="float-chip chip-paid">Payee 92%</div>
+        <div class="float-chip chip-ai">IA active</div>
+
+        <div class="invoice-card">
+          <div class="invoice-head">
+            <div>
+              <p class="invoice-overline">FACTURE</p>
+              <h4>#INV-2026-0184</h4>
+            </div>
+            <span class="invoice-state">Validee</span>
+          </div>
+
+          <div class="invoice-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div class="invoice-metrics">
+            <div>
+              <p>Total TTC</p>
+              <strong>18 760 DT</strong>
+            </div>
+            <div>
+              <p>Echeance</p>
+              <strong>14 Avril</strong>
+            </div>
+          </div>
+
+          <div class="invoice-chart">
+            <span style="height: 34%"></span>
+            <span style="height: 58%"></span>
+            <span style="height: 74%"></span>
+            <span style="height: 52%"></span>
+            <span style="height: 82%"></span>
+          </div>
+        </div>
+
+        <p class="visual-caption">
+          Suivi instantane des montants, etats de paiement et tendances vendeurs dans un seul flux.
+        </p>
+      </div>
+    </aside>
+
+    <article class="auth-card">
+      <div class="auth-card-header">
+        <p class="welcome">Bienvenue</p>
+        <h2>Connexion</h2>
+        <p class="subtitle">Connectez-vous pour acceder a votre espace de travail.</p>
+      </div>
+
+      <form class="auth-form" (ngSubmit)="submit()" autocomplete="off">
+        <div class="field-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            [(ngModel)]="username"
+            placeholder="Votre identifiant"
+            [disabled]="loading"
+            required
+            (input)="clearError()"
+          />
+        </div>
+
+        <div class="field-group">
+          <label for="password">Mot de passe</label>
+          <div class="password-wrapper">
+            <input
+              id="password"
+              name="password"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="password"
+              placeholder="Au moins 6 caracteres"
+              [disabled]="loading"
+              required
+              (input)="clearError()"
+            />
+            <button
+              type="button"
+              class="ghost-toggle"
+              (click)="showPassword = !showPassword"
+              [disabled]="loading"
+            >
+              {{ showPassword ? 'Masquer' : 'Afficher' }}
+            </button>
+          </div>
+        </div>
+
+        <p class="error-message" *ngIf="error">
+          <mat-icon class="app-icon app-icon-sm error-message-icon" aria-hidden="true"
+            >warning</mat-icon
+          >
+          <span>{{ error }}</span>
+        </p>
+
+        <button class="submit-btn" type="submit" [disabled]="loading">
+          <span class="spinner" *ngIf="loading"></span>
+          <span>
+            {{ loading ? 'Connexion en cours...' : 'Se connecter' }}
+          </span>
+        </button>
+      </form>
+
+      <p class="copyright">{{ currentYear }} INET. Tous droits reserves.</p>
+    </article>
+  </div>
+</section>
